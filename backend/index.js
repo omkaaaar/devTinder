@@ -20,6 +20,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+// ! Getting users
 app.get("/user", async (req, res) => {
   try {
     const allUsers = await User.find({});
@@ -29,6 +30,7 @@ app.get("/user", async (req, res) => {
   }
 });
 
+// ! Deleting
 app.delete("/deluser", async (req, res) => {
   const userId = req.body.userId;
   try {
@@ -41,6 +43,7 @@ app.delete("/deluser", async (req, res) => {
   }
 });
 
+// ! Updating
 app.put("/user", async (req, res) => {
   const userId = req.body.userId;
   const user = req.body;
