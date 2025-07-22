@@ -2,6 +2,8 @@
 const express = require("express");
 const app = express();
 const port = 3000;
+const { validateSignup } = require("./utils/validatingSignup");
+const bcrypt = require("bcrypt");
 
 const connectDB = require("./config/db");
 const User = require("../backend/models/user");
@@ -10,13 +12,40 @@ app.use(express.json());
 
 // ! Posting a user to DB
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
-
   try {
+    validateSignup(req);
+    const { firstName, lastName, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+    });
     await user.save();
     res.send("User added succesfully");
   } catch (error) {
-    res.status(400).send("Bad request");
+    res.status(400).send("Bad request: " + error.message);
+  }
+});
+
+// ! Login
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error("invalid login info");
+    }
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (isValidPassword) {
+      res.send("Login sucessful!!");
+    } else {
+      throw new Error("Invalid password");
+    }
+  } catch (error) {
+    res.status(400).send("Bad request: " + error.message);
   }
 });
 
