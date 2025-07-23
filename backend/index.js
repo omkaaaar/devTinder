@@ -4,11 +4,14 @@ const app = express();
 const port = 3000;
 const { validateSignup } = require("./utils/validatingSignup");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 const connectDB = require("./config/db");
 const User = require("../backend/models/user");
 
 app.use(express.json());
+app.use(cookieParser());
 
 // ! Posting a user to DB
 app.post("/signup", async (req, res) => {
@@ -40,10 +43,39 @@ app.post("/login", async (req, res) => {
     }
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (isValidPassword) {
+      const token = await jwt.sign({ _id: user._id }, "Password");
+
+      res.cookie("jwt", token);
+      console.log(token);
+
       res.send("Login sucessful!!");
     } else {
-      throw new Error("Invalid password");
+      throw new Error("Invalid login info");
     }
+  } catch (error) {
+    res.status(400).send("Bad request: " + error.message);
+  }
+});
+
+// ! Getprofile
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = req.cookies;
+    const { token } = cookies;
+    if (!jwt) {
+      return res.status(401).send("You are not logged in");
+    }
+    const decoded = jwt.verify(cookies.jwt, "Password");
+
+    const { _id } = decoded;
+
+    const user = await User.findById(_id);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    res.send(user);
+
+    // console.log(user);
   } catch (error) {
     res.status(400).send("Bad request: " + error.message);
   }
