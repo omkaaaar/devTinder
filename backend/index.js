@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 
 const connectDB = require("./config/db");
 const User = require("../backend/models/user");
+const auth = require("./middleware/auth");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -46,7 +47,7 @@ app.post("/login", async (req, res) => {
       const token = await jwt.sign({ _id: user._id }, "Password");
 
       res.cookie("jwt", token);
-      console.log(token);
+      // console.log(token);
 
       res.send("Login sucessful!!");
     } else {
@@ -60,21 +61,11 @@ app.post("/login", async (req, res) => {
 // ! Getprofile
 app.get("/profile", async (req, res) => {
   try {
-    const cookies = req.cookies;
-    const { token } = cookies;
-    if (!jwt) {
-      return res.status(401).send("You are not logged in");
-    }
-    const decoded = jwt.verify(cookies.jwt, "Password");
-
-    const { _id } = decoded;
-
-    const user = await User.findById(_id);
+    const user = req.user;
     if (!user) {
       return res.status(404).send("User not found");
     }
     res.send(user);
-
     // console.log(user);
   } catch (error) {
     res.status(400).send("Bad request: " + error.message);
