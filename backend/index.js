@@ -9,7 +9,7 @@ const jwt = require("jsonwebtoken");
 
 const connectDB = require("./config/db");
 const User = require("../backend/models/user");
-const auth = require("./middleware/auth");
+const { userAuth } = require("./middleware/auth");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -44,9 +44,13 @@ app.post("/login", async (req, res) => {
     }
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (isValidPassword) {
-      const token = await jwt.sign({ _id: user._id }, "Password");
+      const token = await jwt.sign({ _id: user._id }, "omkar", {
+        expiresIn: "1d",
+      });
 
-      res.cookie("jwt", token);
+      res.cookie("jwt", token, {
+        expires: new Date(Date.now() + 8 * 3600000),
+      });
       // console.log(token);
 
       res.send("Login sucessful!!");
@@ -59,7 +63,7 @@ app.post("/login", async (req, res) => {
 });
 
 // ! Getprofile
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
