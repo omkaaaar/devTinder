@@ -1,4 +1,3 @@
-// const { ObjectId } = require("mongodb");
 const express = require("express");
 const app = express();
 const port = 3000;
@@ -39,10 +38,13 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+
     if (!user) {
       throw new Error("invalid login info");
     }
+
     const isValidPassword = await bcrypt.compare(password, user.password);
+
     if (isValidPassword) {
       const token = await jwt.sign({ _id: user._id }, "omkar", {
         expiresIn: "1d",
@@ -132,6 +134,7 @@ app.put("/user/:userId", async (req, res) => {
   }
 });
 
+// ! DB connection
 connectDB()
   .then(() => {
     console.log("Connected to MongoDB");
@@ -140,5 +143,5 @@ connectDB()
     });
   })
   .catch((err) => {
-    console.log(err);
+    console.log("Error: " + err.message);
   });
