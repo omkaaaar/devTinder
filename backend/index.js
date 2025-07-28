@@ -43,12 +43,10 @@ app.post("/login", async (req, res) => {
       throw new Error("invalid login info");
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await user.validatePassword(password);
 
     if (isValidPassword) {
-      const token = await jwt.sign({ _id: user._id }, "omkar", {
-        expiresIn: "1d",
-      });
+      const token = await user.getJWT();
 
       res.cookie("jwt", token, {
         expires: new Date(Date.now() + 8 * 3600000),
@@ -75,6 +73,16 @@ app.get("/profile", userAuth, async (req, res) => {
     // console.log(user);
   } catch (error) {
     res.status(400).send("Bad request: " + error.message);
+  }
+});
+
+// ! Sending a connection request
+app.post("/sendconnection", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    res.send(`${user.firstName} Sent you a request`);
+  } catch (err) {
+    res.status(400).send("Bad request: " + err.message);
   }
 });
 
