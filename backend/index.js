@@ -1,146 +1,25 @@
 const express = require("express");
 const app = express();
 const port = 3000;
-const { validateSignup } = require("./utils/validatingSignup");
-const bcrypt = require("bcrypt");
-const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
+// const { validateSignup } = require("./utils/validatingSignup");
 
+const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
-const User = require("../backend/models/user");
-const { userAuth } = require("./middleware/auth");
+
+const auth = require("./routes/auth");
+const deleteUser = require("./routes/delete");
+const profile = require("./routes/profile");
+const request = require("./routes/request");
+const update = require("./routes/update");
 
 app.use(express.json());
 app.use(cookieParser());
 
-// ! Posting a user to DB
-app.post("/signup", async (req, res) => {
-  try {
-    validateSignup(req);
-    const { firstName, lastName, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = new User({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-    });
-    await user.save();
-    res.send("User added succesfully");
-  } catch (error) {
-    res.status(400).send("Bad request: " + error.message);
-  }
-});
-
-// ! Login
-app.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      throw new Error("invalid login info");
-    }
-
-    const isValidPassword = await user.validatePassword(password);
-
-    if (isValidPassword) {
-      const token = await user.getJWT();
-
-      res.cookie("jwt", token, {
-        expires: new Date(Date.now() + 8 * 3600000),
-      });
-      // console.log(token);
-
-      res.send("Login sucessful!!");
-    } else {
-      throw new Error("Invalid login info");
-    }
-  } catch (error) {
-    res.status(400).send("Bad request: " + error.message);
-  }
-});
-
-// ! Getprofile
-app.get("/profile", userAuth, async (req, res) => {
-  try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-    res.send(user);
-    // console.log(user);
-  } catch (error) {
-    res.status(400).send("Bad request: " + error.message);
-  }
-});
-
-// ! Sending a connection request
-app.post("/sendconnection", userAuth, async (req, res) => {
-  try {
-    const user = req.user;
-    res.send(`${user.firstName} Sent you a request`);
-  } catch (err) {
-    res.status(400).send("Bad request: " + err.message);
-  }
-});
-
-// ! Getting users
-app.get("/user", async (req, res) => {
-  try {
-    const allUsers = await User.find({});
-    res.send(allUsers);
-  } catch (err) {
-    res.status(400).send("Bad request");
-  }
-});
-
-// ! Deleting
-app.delete("/deluser", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    const user = await User.findByIdAndDelete(userId);
-    // console.log(deleteUser);
-
-    res.send("User deleted succesfully");
-  } catch (err) {
-    res.status(400).send("Bad request");
-  }
-});
-
-// ! Updating
-app.put("/user/:userId", async (req, res) => {
-  const userId = req.params.userId;
-  const user = req.body;
-  try {
-    const allowedUpdate = [
-      "firstName",
-      "lastName",
-      "password",
-      "about",
-      "gender",
-      "age",
-      "skills",
-    ];
-
-    const isUpdateAllowed = Object.keys(user).every((k) =>
-      allowedUpdate.includes(k)
-    );
-    if (!isUpdateAllowed) {
-      throw new Error("Cannot update");
-    }
-    if (user?.skills.length > 10) {
-      throw new Error("skills cannot exceed the limit of 10");
-    }
-    await User.findByIdAndUpdate({ _id: userId }, user, {
-      runValidators: true,
-    });
-    res.send("User updated succesfully");
-  } catch (err) {
-    res.status(400).send("Bad request " + err.message);
-  }
-});
+app.use("/", auth);
+app.use("/", deleteUser);
+app.use("/", profile);
+app.use("/", request);
+app.use("/", update);
 
 // ! DB connection
 connectDB()
