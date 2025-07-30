@@ -6,7 +6,7 @@ const User = require("../models/user");
 const { userAuth } = require("../middleware/auth");
 
 // ! Getprofile
-profileRouter.get("/profile", userAuth, async (req, res) => {
+profileRouter.get("/profile/view", userAuth, async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
@@ -16,16 +16,6 @@ profileRouter.get("/profile", userAuth, async (req, res) => {
     // console.log(user);
   } catch (error) {
     res.status(400).send("Bad request: " + error.message);
-  }
-});
-
-// ! Getting users
-profileRouter.get("/user", async (req, res) => {
-  try {
-    const allUsers = await User.find({});
-    res.send(allUsers);
-  } catch (err) {
-    res.status(400).send("Bad request");
   }
 });
 

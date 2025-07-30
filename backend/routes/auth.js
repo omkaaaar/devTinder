@@ -1,19 +1,9 @@
 const express = require("express");
 const authRouter = express.Router();
 const { validateSignup } = require("../utils/validatingSignup");
-// const bcrypt = require("bcrypt");
-const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
 
-// const connectDB = require("./config/db");
-// const User = require("../backend/models/user");
-// const { userAuth } = require("./middleware/auth");
-
-// const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
-
-const { userAuth } = require("../middleware/auth");
 
 // ! Posting a user to DB
 authRouter.post("/signup", async (req, res) => {
@@ -53,8 +43,8 @@ authRouter.post("/login", async (req, res) => {
       res.cookie("jwt", token, {
         expires: new Date(Date.now() + 8 * 3600000),
       });
-      // console.log(token);
 
+      // console.log(token);
       res.send("Login sucessful!!");
     } else {
       throw new Error("Invalid login info");
@@ -62,6 +52,14 @@ authRouter.post("/login", async (req, res) => {
   } catch (error) {
     res.status(400).send("Bad request: " + error.message);
   }
+});
+
+// ! LogOut
+authRouter.post("/logout", async (req, res) => {
+  res.cookie("jwt", null, {
+    expires: new Date(Date.now()),
+  });
+  res.send("User Logged out");
 });
 
 module.exports = authRouter;
