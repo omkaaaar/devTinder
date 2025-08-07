@@ -19,7 +19,7 @@ app.use("/", auth);
 app.use("/", deleteUser);
 app.use("/", profile);
 app.use("/", request);
-// app.use("/", update);
+app.use("/", update);
 
 // ! DB connection
 connectDB()
