@@ -26,10 +26,35 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
       throw new Error("Invalid update data");
     }
     const user = req.user;
-    console.log(user);
+    // console.log(user);
+    Object.keys(req.body).forEach((key) => (user[key] = req.body[key]));
+    await user.save();
+    // console.log(user);
     res.send("Profile updated successfully");
-    
   }catch (error) {
+    res.status(400).send("Bad request: " + error.message);
+  }
+})
+
+// ! Update password
+profileRouter.patch("/profile/updatepassword", userAuth, async (req, res) => {
+  try{
+    const user = req.user;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).send("Old password and new password are required");
+    }
+
+    const isMatch = await user.comparePassword(oldPassword);
+    if (!isMatch) {
+      return res.status(400).send("Old password is incorrect");
+    }
+
+    user.password = newPassword;
+    await user.save();
+    res.send("Password updated successfully");
+  } catch (error) {
     res.status(400).send("Bad request: " + error.message);
   }
 })
