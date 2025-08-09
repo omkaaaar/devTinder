@@ -11,6 +11,16 @@ const validateSignup = (req) => {
   }
 };
 
-const validateProfileEditData = (req) => {};
+const validateProfileEditData = (req) => {
+  const alowedUpdate = ["firstName", "lastName", "password", "about"]
+  const user = req.body;
+  const isUpdateAllowed = Object.keys(user).every((k) =>
+    alowedUpdate.includes(k)
+  );
+  if (!isUpdateAllowed) {
+    throw new Error("Cannot update");
+  }
+  return isUpdateAllowed;
+};
 
-module.exports = { validateSignup };
+module.exports = { validateSignup ,validateProfileEditData};
